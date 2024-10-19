@@ -16,7 +16,7 @@ struct Args {
 #[derive(Subcommand)]
 enum Commands {
     /// Download a Hugging Face model
-    // e.g. cargo run -p cli -- download --repository TheBloke/Llama-2-7B-Chat-GPTQ --revision gptq-4bit-64g-actorder_True
+    // e.g. cargo run --bin possum -- download --repository TheBloke/Llama-2-7B-Chat-GPTQ --revision gptq-4bit-64g-actorder_True
     Model {
         #[command(subcommand)]
         command: ModelCommands,
