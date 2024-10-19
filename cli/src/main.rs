@@ -43,26 +43,35 @@ enum ModelCommands {
     },
 }
 
-fn model_command(command: &ModelCommands) -> Result<(), Box<dyn Error>> {
+async fn model_command(command: &ModelCommands) -> Result<(), Box<dyn Error + Send + Sync>> {
     match command {
         ModelCommands::Download {
             repository,
             revision,
             to,
             token,
-        } => commands::model::download(repository, revision.as_ref(), to.as_ref(), token.as_ref())?,
+        } => {
+            commands::model::download(
+                repository,
+                revision.as_ref(),
+                to.as_ref().unwrap(),
+                token.as_ref(),
+            )
+            .await?
+        }
     };
 
     Ok(())
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let args = Args::parse();
 
     // cargo run -p cli -- model download --repository TheBloke/Llama-2-7B-Chat-GPTQ --revision gptq-4bit-64g-actorder_True --token abc
 
     match &args.command {
-        Some(Commands::Model { command }) => model_command(command)?,
+        Some(Commands::Model { command }) => model_command(command).await?,
         None => (),
     }
 
