@@ -128,7 +128,6 @@ pub async fn download(
         })
         .collect();
 
-    // Run all download tasks and show progress bars
     join_all(download_tasks).await;
 
     Ok(())
