@@ -66,11 +66,26 @@ pub async fn download(
     }
 
     let files = list_files(repository, revision, token).await?;
+
+    let has_safetensor = files
+        .iter()
+        .any(|file| file.starts_with("model") && file.ends_with(".safetensors"));
+    let ignore_patterns = if has_safetensor {
+        ["*.pt", "*.bin"]
+            .iter()
+            .map(|p| glob::Pattern::new(p).unwrap())
+            .collect()
+    } else {
+        Vec::new()
+    };
+
     let client = Arc::new(Client::new());
     let mp = Arc::new(MultiProgress::new()); // MultiProgress for managing multiple progress bars
-
     let download_tasks: Vec<_> = files
         .into_iter()
+        .filter(|file| {
+            !ignore_patterns.iter().any(|pattern| pattern.matches(file))
+        })
         .map(|file| {
             let client = Arc::clone(&client);
             let token = token.cloned();
