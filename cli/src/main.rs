@@ -25,7 +25,7 @@ enum Commands {
 
 #[derive(Subcommand, Debug)]
 enum ModelCommands {
-    /// Download weights
+    /// Download repository files
     Download {
         /// The model repository-id (e.g. TheBloke/Llama-2-7B-Chat-GPTQ)
         #[arg(long)]
@@ -43,14 +43,13 @@ enum ModelCommands {
         #[arg(long)]
         token: Option<String>,
     },
-    /// Get metadata
+    /// Get repository metadata
     Metadata {
         /// The model repository-id (e.g. bert-base-uncased)
         #[arg(long)]
         repository: String,
     },
-    /// Search based on keyword and filter
-    // e.g. model search --keyword neuralmagic Llama-3.1 --filter gptq
+    /// Search for repositories based on keywords and a filter
     Search {
         /// Keywords for the search
         #[arg(long, num_args = 1..)]
@@ -61,8 +60,7 @@ enum ModelCommands {
         filter: Option<String>,
     },
 
-    /// List the available revisions for a repository (tags or branches)
-    //  e.g. cargo run --bin possum -- model revisions --repository TheBloke/Mixtral-8x7B-v0.1-GPTQ
+    /// List available revisions of a repository
     Revisions {
         /// The model repository-id (e.g. TheBloke/Mixtral-8x7B-v0.1-GPTQ)
         #[arg(long)]
