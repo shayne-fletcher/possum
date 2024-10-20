@@ -31,21 +31,21 @@ enum ModelCommands {
         #[arg(long)]
         repository: String,
 
-        /// Possibly a revision (e.g. gptq-4bit-64g-actorder_True)
+        /// Optional revision (e.g. gptq-4bit-64g-actorder_True)
         #[arg(short, long)]
         revision: Option<String>,
 
-        /// A directory to download to (defaults to `./huggingface`)
+        /// A directory to download to (default: `./huggingface`)
         #[arg(short, long, default_value = DEFAULT_DOWNLOAD_DIR)]
         to: Option<std::path::PathBuf>,
 
-        /// Huggingface token (sometimes required for 'gated' models)
+        /// Hugging Face token (might be needed for 'gated' models)
         #[arg(long)]
         token: Option<String>,
     },
     /// Get repository metadata
     Metadata {
-        /// The model repository-id (e.g. bert-base-uncased)
+        /// The model repository-id (e.g. TheBloke/Llama-2-7B-Chat-GPTQ)
         #[arg(long)]
         repository: String,
     },
@@ -55,14 +55,14 @@ enum ModelCommands {
         #[arg(long, num_args = 1..)]
         keyword: Vec<String>,
 
-        /// An optional filter e.g. 'gptq' or 'text-classification'
+        /// An optional filter (e.g. 'gptq' or 'text-classification')
         #[arg(long)]
         filter: Option<String>,
     },
 
     /// List available revisions of a repository
     Revisions {
-        /// The model repository-id (e.g. TheBloke/Mixtral-8x7B-v0.1-GPTQ)
+        /// The model repository-id (e.g. TheBloke/Llama-2-7B-Chat-GPTQ)
         #[arg(long)]
         repository: String,
     },
