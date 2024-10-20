@@ -18,6 +18,12 @@ pub async fn list_files(
         url = format!("{}/revision/{}", url, rev);
     }
 
+    tracing::info!(
+        "Getting a file list of {repository} (@ revision \"{}\")",
+        revision.unwrap_or(&"main".to_owned())
+    );
+    tracing::debug!("File list URL: {url}");
+
     let client = Client::new();
     let request = match token {
         Some(t) => client.get(&url).bearer_auth(t),
@@ -121,8 +127,19 @@ pub async fn download(
         })
         .collect();
 
-    tracing::info!("Downloading files from {}", repository);
+    tracing::info!(
+        "Downloading files from {} (@ revision \"{}\")",
+        repository,
+        revision.unwrap_or(&"main".to_owned())
+    );
+
     join_all(download_tasks).await;
+
+    tracing::info!(
+        "Finished downloading from {} (@ revision \"{}\")",
+        repository,
+        revision.unwrap_or(&"main".to_owned())
+    );
 
     Ok(())
 }

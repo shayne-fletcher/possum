@@ -112,7 +112,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     // cargo run --bin possum -- model revisions --repository TheBloke/Llama-2-7B-Chat-GPTQ
     // cargo run --bin possum -- model download --repository TheBloke/Llama-2-7B-Chat-GPTQ --revision gptq-4bit-64g-actorder_True
 
-    tracing::info!("Hello possums!");
+    tracing::info!("Hello possums! ✨");
     match &args.command {
         Some(Commands::Model { command }) => model_command(command).await?,
         None => (),
