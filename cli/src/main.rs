@@ -60,6 +60,14 @@ enum ModelCommands {
         #[arg(long)]
         filter: Option<String>,
     },
+
+    /// List the available revisions for a repository (tags or branches)
+    //  e.g. cargo run --bin possum -- model revisions --repository TheBloke/Mixtral-8x7B-v0.1-GPTQ
+    Revisions {
+        /// The model repository-id (e.g. TheBloke/Mixtral-8x7B-v0.1-GPTQ)
+        #[arg(long)]
+        repository: String,
+    },
 }
 
 async fn model_command(command: &ModelCommands) -> Result<(), Box<dyn Error + Send + Sync>> {
@@ -84,6 +92,9 @@ async fn model_command(command: &ModelCommands) -> Result<(), Box<dyn Error + Se
         ModelCommands::Search { keyword, filter } => {
             commands::model::search(keyword, filter.as_deref()).await?;
         }
+        ModelCommands::Revisions { repository } => {
+            commands::model::revisions(repository).await?;
+        }
     };
 
     Ok(())
@@ -93,7 +104,10 @@ async fn model_command(command: &ModelCommands) -> Result<(), Box<dyn Error + Se
 async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let args = Args::parse();
 
-    // cargo run -p cli -- model download --repository TheBloke/Llama-2-7B-Chat-GPTQ --revision gptq-4bit-64g-actorder_True --token abc
+    // cargo run --bin possum -- model search --keyword TheBloke Llama-2-7B --filter gptq
+    // cargo run --bin possum -- model metadata --repository TheBloke/Llama-2-7B-Chat-GPTQ | jq '.transformersInfo'
+    // cargo run --bin possum -- model revisions --repository TheBloke/Llama-2-7B-Chat-GPTQ
+    // cargo run --bin possum -- model download --repository TheBloke/Llama-2-7B-Chat-GPTQ --revision gptq-4bit-64g-actorder_True
 
     match &args.command {
         Some(Commands::Model { command }) => model_command(command).await?,

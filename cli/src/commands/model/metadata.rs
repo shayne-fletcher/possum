@@ -8,7 +8,7 @@ pub async fn metadata(repository: &str) -> Result<(), Box<dyn Error + Send + Syn
     let response = client.get(&url).send().await?;
     if response.status().is_success() {
         let metadata: Value = response.json().await?;
-        println!("Metadata for {}: {:#?}", repository, metadata);
+        println!("{}", metadata.to_string());
         Ok(())
     } else {
         eprintln!("Failed to fetch metadata: {}", response.status());
