@@ -33,17 +33,17 @@ pub async fn list_files(
                 .filter_map(|f| f["rfilename"].as_str().map(|s| s.to_string()))
                 .collect();
             if files.is_empty() {
-                println!("No files found in the repository");
+                tracing::info!("No files found in the repository");
             }
 
             Ok(files)
         } else {
-            println!("No files found in the repository");
+            tracing::info!("No files found in the repository");
 
             Ok(vec![])
         }
     } else {
-        eprintln!("Failed to list files: {}", response.status());
+        tracing::error!("Failed to list files: {}", response.status());
         Err(format!("Failed to list files for {}", repository).into())
     }
 }
@@ -56,7 +56,7 @@ pub async fn download(
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     if !to.exists() {
         fs::create_dir_all(&to)?;
-        println!("Created directory: {}", to.display());
+        tracing::info!("Created directory: {}", to.display());
     }
 
     let files = list_files(repository, revision, token).await?;
@@ -113,7 +113,7 @@ pub async fn download(
                     }
                     progress_bar.finish_with_message(format!("Downloaded: {}", file));
                 } else {
-                    eprintln!("Failed to download file: {}", file);
+                    tracing::error!("Failed to download file: {}", file);
                 }
 
                 Ok::<(), Box<dyn Error + Send + Sync>>(())
@@ -121,6 +121,7 @@ pub async fn download(
         })
         .collect();
 
+    tracing::info!("Downloading files from {}", repository);
     join_all(download_tasks).await;
 
     Ok(())
