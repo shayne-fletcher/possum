@@ -5,6 +5,8 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Allows pushing to the `gh-pages` branch
     steps:
     - uses: actions/checkout@v4.1.0
     - uses: SebRollen/toml-action@v1.0.2
@@ -26,7 +28,12 @@ jobs:
         mkdir $RUNNER_TEMP/artifacts
         cargo build --bin=possum -Z unstable-options --artifact-dir=$RUNNER_TEMP/artifacts
       shell: bash
-  # - run: sudo apt-get update
-  #   shell: bash
-  # - run: sudo apt-get install opam libzstd-dev python3-pip
-  #   shell: bash
+    - name: Build documentation
+      run: |
+        cargo doc --no-deps --package possum --target-dir target/doc/lib
+        cargo doc --no-deps --package possum-cli --target-dir target/doc/bin
+    - name: Deploy documentation to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./target/doc
