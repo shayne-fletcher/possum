@@ -76,13 +76,15 @@ async fn model_command(command: &ModelCommands) -> Result<(), Box<dyn Error + Se
             to,
             token,
         } => {
-            commands::model::download(
-                repository,
-                revision.as_ref(),
-                to.as_ref().unwrap(),
-                token.as_ref(),
-            )
-            .await?
+            let mut local_dir = to.as_ref().unwrap().clone();
+            local_dir.push(repository);
+            if let Some(rev) = revision {
+                // Convert to a string to append revision
+                let lds = local_dir.to_string_lossy();
+                local_dir = std::path::PathBuf::from(format!("{}:{}", lds, rev));
+            }
+            commands::model::download(repository, revision.as_ref(), &local_dir, token.as_ref())
+                .await?
         }
         ModelCommands::Metadata { repository } => {
             commands::model::metadata(repository).await?;
@@ -100,6 +102,9 @@ async fn model_command(command: &ModelCommands) -> Result<(), Box<dyn Error + Se
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
+    let subscriber = tracing_subscriber::FmtSubscriber::new();
+    tracing::subscriber::set_global_default(subscriber)?;
+
     let args = Args::parse();
 
     // cargo run --bin possum -- model search --keyword TheBloke Llama-2-7B --filter gptq
@@ -107,6 +112,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     // cargo run --bin possum -- model revisions --repository TheBloke/Llama-2-7B-Chat-GPTQ
     // cargo run --bin possum -- model download --repository TheBloke/Llama-2-7B-Chat-GPTQ --revision gptq-4bit-64g-actorder_True
 
+    tracing::info!("Hello possums!");
     match &args.command {
         Some(Commands::Model { command }) => model_command(command).await?,
         None => (),
