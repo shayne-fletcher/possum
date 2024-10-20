@@ -2,7 +2,6 @@ use futures::future::join_all;
 use futures::stream::StreamExt;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use reqwest::Client;
-use reqwest::StatusCode;
 use serde_json::Value;
 use std::error::Error;
 use std::fs;
@@ -44,14 +43,8 @@ pub async fn list_files(
             Ok(vec![])
         }
     } else {
-        match response.status() {
-            StatusCode::UNAUTHORIZED => eprintln!("Authentication failed: Unauthorized"),
-            StatusCode::FORBIDDEN => eprintln!("Access denied: Forbidden"),
-            StatusCode::NOT_FOUND => eprintln!("Resource not found"),
-            other => eprintln!("Request failed with status: {}", other),
-        }
-
-        Err(format!("Request failed with status: {}", response.status()).into())
+        eprintln!("Failed to list files: {}", response.status());
+        Err(format!("Failed to list files for {}", repository).into())
     }
 }
 

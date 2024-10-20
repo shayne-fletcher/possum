@@ -11,7 +11,7 @@ pub async fn metadata(repository: &str) -> Result<(), Box<dyn Error + Send + Syn
         println!("Metadata for {}: {:#?}", repository, metadata);
         Ok(())
     } else {
-        println!("Failed to fetch metadata: {}", response.status());
+        eprintln!("Failed to fetch metadata: {}", response.status());
         Err(format!("Failed to get metadata for {}", repository).into())
     }
 }

@@ -15,7 +15,7 @@ struct Args {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Download a Hugging Face model
+    /// Do things with 🤗 models
     // e.g. cargo run --bin possum -- download --repository TheBloke/Llama-2-7B-Chat-GPTQ --revision gptq-4bit-64g-actorder_True
     Model {
         #[command(subcommand)]
@@ -25,23 +25,25 @@ enum Commands {
 
 #[derive(Subcommand, Debug)]
 enum ModelCommands {
+    /// Download weights
     Download {
-        /// The model repository-id
+        /// The model repository-id (e.g. TheBloke/Llama-2-7B-Chat-GPTQ)
         #[arg(long)]
         repository: String,
 
-        /// An optional revision
+        /// Possibly a revision (e.g. gptq-4bit-64g-actorder_True)
         #[arg(short, long)]
         revision: Option<String>,
 
-        /// An optional local directory (default)
+        /// A directory to download to (defaults to `./huggingface`)
         #[arg(short, long, default_value = DEFAULT_DOWNLOAD_DIR)]
         to: Option<std::path::PathBuf>,
 
+        /// Huggingface token (sometimes required for 'gated' models)
         #[arg(long)]
         token: Option<String>,
     },
-    /// Get metadata for a Hugging Face model
+    /// Get metadata
     Metadata {
         /// The model repository-id (e.g. bert-base-uncased)
         #[arg(long)]
