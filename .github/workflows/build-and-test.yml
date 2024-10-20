@@ -15,14 +15,16 @@ jobs:
     - uses: dtolnay/rust-toolchain@v1
       with:
         toolchain: ${{ steps.read_rust_toolchain.outputs.value }}
-        components: clippy
+        components: clippy, rustfmt
     - uses: Swatinem/rust-cache@v2
       with:
         prefix-key: possum-build
+    - name: Run rustfmt check
+      run: cargo fmt --all --check
     - name: Build possum binary (debug)
       run: |-
         mkdir $RUNNER_TEMP/artifacts
-        cargo build --bin=possum -Z unstable-options --out-dir=$RUNNER_TEMP/artifacts
+        cargo build --bin=possum -Z unstable-options --artifact-dir=$RUNNER_TEMP/artifacts
       shell: bash
   # - run: sudo apt-get update
   #   shell: bash
