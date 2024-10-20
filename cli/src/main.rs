@@ -49,6 +49,17 @@ enum ModelCommands {
         #[arg(long)]
         repository: String,
     },
+    /// Search based on keyword and filter
+    // e.g. model search --keyword neuralmagic Llama-3.1 --filter gptq
+    Search {
+        /// Keywords for the search
+        #[arg(long, num_args = 1..)]
+        keyword: Vec<String>,
+
+        /// An optional filter e.g. 'gptq' or 'text-classification'
+        #[arg(long)]
+        filter: Option<String>,
+    },
 }
 
 async fn model_command(command: &ModelCommands) -> Result<(), Box<dyn Error + Send + Sync>> {
@@ -69,6 +80,9 @@ async fn model_command(command: &ModelCommands) -> Result<(), Box<dyn Error + Se
         }
         ModelCommands::Metadata { repository } => {
             commands::model::metadata(repository).await?;
+        }
+        ModelCommands::Search { keyword, filter } => {
+            commands::model::search(keyword, filter.as_deref()).await?;
         }
     };
 
