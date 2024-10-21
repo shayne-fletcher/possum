@@ -1,13 +1,17 @@
 name: Publish documentation
 on:
-  push:
+  workflow_run:
+    workflows: ["Build and test"]
     branches:
       - master
+    types:
+      - completed
 jobs:
   publish-docs:
     runs-on: ubuntu-latest
     permissions:
       contents: write  # Allows pushing to the `gh-pages` branch
+    if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
     steps:
     - uses: actions/checkout@v4.1.0
     - uses: SebRollen/toml-action@v1.0.2
