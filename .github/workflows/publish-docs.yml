@@ -1,9 +1,10 @@
-name: Build and test
+name: Publish documentation
 on:
   push:
-  pull_request:
+    branches:
+      - master
 jobs:
-  build-and-test:
+  publish-docs:
     runs-on: ubuntu-latest
     permissions:
       contents: write  # Allows pushing to the `gh-pages` branch
@@ -21,14 +22,12 @@ jobs:
     - uses: Swatinem/rust-cache@v2
       with:
         prefix-key: possum-build
-    - name: Run rustfmt check
-      run: cargo fmt --all --check
-    - name: Build possum binary (debug)
-      run: |-
-        mkdir $RUNNER_TEMP/artifacts
-        cargo build --bin=possum -Z unstable-options --artifact-dir=$RUNNER_TEMP/artifacts
-      shell: bash
     - name: Build documentation
       run: |
         cargo doc --no-deps --package possum --target-dir=$RUNNER_TEMP/artifacts/doc/lib
         cargo doc --no-deps --package possum-cli --target-dir=$RUNNER_TEMP/artifacts/doc/bin
+    - name: Deploy documentation to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: $RUNNER_TEMP/artifacts/doc
