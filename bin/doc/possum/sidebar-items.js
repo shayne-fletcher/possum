@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["DEFAULT_DOWNLOAD_DIR"],"enum":["Commands","ModelCommands"],"fn":["main","model_command"],"mod":["commands"],"struct":["Args"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["download","metadata","revisions","search"]};
