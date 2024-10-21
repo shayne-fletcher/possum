@@ -24,10 +24,10 @@ jobs:
         prefix-key: possum-build
     - name: Build documentation
       run: |
-        cargo doc --no-deps --package possum --target-dir=$RUNNER_TEMP/artifacts/doc/lib
-        cargo doc --no-deps --package possum-cli --target-dir=$RUNNER_TEMP/artifacts/doc/bin
+        cargo doc --no-deps --package possum --target-dir="$RUNNER_TEMP"/artifacts/doc/lib
+        cargo doc --no-deps --package possum-cli --target-dir="$RUNNER_TEMP"/artifacts/doc/bin
     - name: Deploy documentation to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: $RUNNER_TEMP/artifacts/doc
+        publish_dir: ${{ runner.temp }}/artifacts/doc
