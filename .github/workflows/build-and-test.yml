@@ -3,10 +3,8 @@ on:
   push:
   pull_request:
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write  # Allows pushing to the `gh-pages` branch
     steps:
     - uses: actions/checkout@v4.1.0
     - uses: SebRollen/toml-action@v1.0.2
@@ -19,16 +17,39 @@ jobs:
         toolchain: ${{ steps.read_rust_toolchain.outputs.value }}
         components: clippy, rustfmt
     - uses: Swatinem/rust-cache@v2
+      id: build-cache
       with:
-        prefix-key: possum-build
+        shared-key: shared-build-cache
+        cache-targets: true
+        cache-all-crates: true
     - name: Run rustfmt check
       run: cargo fmt --all --check
-    - name: Build possum binary (debug)
+    - name: Build possum
       run: |-
-        mkdir $RUNNER_TEMP/artifacts
-        cargo build --bin=possum -Z unstable-options --artifact-dir=$RUNNER_TEMP/artifacts
+        cargo build
       shell: bash
     - name: Build documentation
       run: |
         cargo doc --no-deps --package possum --target-dir target/doc/lib
         cargo doc --no-deps --package possum-cli --target-dir target/doc/bin
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - uses: actions/checkout@v4.1.0
+    - uses: SebRollen/toml-action@v1.0.2
+      id: read_rust_toolchain
+      with:
+        file: rust-toolchain
+        field: toolchain.channel
+    - uses: dtolnay/rust-toolchain@v1
+      with:
+        toolchain: ${{ steps.read_rust_toolchain.outputs.value }}
+        components: clippy, rustfmt
+    - uses: Swatinem/rust-cache@v2
+      id: test-cache
+      with:
+        shared-key: shared-build-cache
+    - name: Run tests
+      run: cargo test
