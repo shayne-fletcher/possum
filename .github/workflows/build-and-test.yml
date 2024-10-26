@@ -1,4 +1,4 @@
-name: Build and test
+name: build and test
 on:
   push:
   pull_request:
@@ -22,15 +22,16 @@ jobs:
         shared-key: shared-build-cache
         cache-targets: true
         cache-all-crates: true
-    - name: Run rustfmt check
+    - name: format check
+      working-directory: '.'
       run: cargo fmt --all --check
-    - name: Build possum
-      run: |-
-        cargo build
+    - name: clippy check
+      working-directory: '.'
+      run: cargo clippy # -- -D warnings
+    - name: build
+      working-directory: '.'
+      run: cargo build
       shell: bash
-    - name: Build documentation
-      run: |
-        cargo doc --no-deps
   test:
     runs-on: ubuntu-latest
     needs: build
@@ -49,5 +50,37 @@ jobs:
       id: test-cache
       with:
         shared-key: shared-build-cache
-    - name: Run tests
+    - name: run tests
+      working-directory: '.'
       run: cargo test
+  publish-docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # allows pushing to the `gh-pages` branch
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    steps:
+    - uses: actions/checkout@v4.1.0
+    - uses: SebRollen/toml-action@v1.0.2
+      id: read_rust_toolchain
+      with:
+        file: rust-toolchain
+        field: toolchain.channel
+    - uses: dtolnay/rust-toolchain@v1
+      with:
+        toolchain: ${{ steps.read_rust_toolchain.outputs.value }}
+    - uses: Swatinem/rust-cache@v2
+      id: docs-cache
+      with:
+        shared-key: shared-build-cache
+    - name: build docs
+      working-directory: '.'
+      run: cargo doc --no-deps
+    - name: accelerate gh_pages refresh by noting there are no jekyll templa$
+      working-directory: '.'
+      run: touch target/doc/.nojekyll
+    - name: publish to gh_pages
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: target/doc
