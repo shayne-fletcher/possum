@@ -12,5 +12,4 @@
       -h, --help     Print help
       -V, --version  Print version
 ```
-
 <img src="./img/possum.jpeg" alt="possum" style="float: left; width: 50%; height: 50%;">
