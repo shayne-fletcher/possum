@@ -1,4 +1,4 @@
-# possum [![Build and test](https://github.com/shayne-fletcher/possum/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/shayne-fletcher/possum/actions/workflows/build-and-test.yml)     [![Publish documentation](https://github.com/shayne-fletcher/possum/actions/workflows/publish-docs.yml/badge.svg)](https://github.com/shayne-fletcher/possum/actions/workflows/publish-docs.yml)
+# possum [![Build and test](https://github.com/shayne-fletcher/possum/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/shayne-fletcher/possum/actions/workflows/build-and-test.yml)
 
 [rustdoc docs](https://shayne-fletcher.github.io/possum/bin/doc/possum/index.html)
 ```
