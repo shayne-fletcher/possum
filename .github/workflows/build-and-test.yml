@@ -58,7 +58,7 @@ jobs:
     permissions:
       contents: write  # Allows pushing to the `gh-pages` branch
     needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
     - uses: actions/checkout@v4.1.0
     - uses: SebRollen/toml-action@v1.0.2
