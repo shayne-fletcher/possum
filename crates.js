@@ -1,1 +1,0 @@
-window.ALL_CRATES = ["possum","possum_lib"];
