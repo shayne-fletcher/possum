@@ -3,20 +3,13 @@ use serde_json::Value;
 use std::error::Error;
 
 pub async fn search(
-    keywords: &Vec<String>,
+    keywords: &[String],
     filter: Option<&str>,
     api_base_url: &str,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     let client = Client::new();
 
-    let search_query = keywords.join(" ");
-    let mut url = format!("{}/api/models?search={}", api_base_url, search_query);
-
-    // If a filter (e.g., task type or another keyword like 'gptq') is provided, add it to the query
-    if let Some(f) = filter {
-        url.push_str(&format!("&filter={}", f));
-    }
-
+    let url = build_search_url(keywords, filter, api_base_url);
     let response = client.get(&url).send().await?;
 
     if response.status().is_success() {
@@ -27,26 +20,28 @@ pub async fn search(
             // Print the modelId of each model
             for model in model_list {
                 if let Some(model_id) = model.get("modelId").and_then(|id| id.as_str()) {
-                    println!("{}", model_id);
+                    println!("{model_id}");
                 }
             }
         } else {
-            println!("No models found for '{}'.", search_query);
+            let search_query = keywords.join(" ");
+            println!("No models found for '{search_query}'.");
         }
 
         Ok(())
     } else {
+        let search_query = keywords.join(" ");
         println!("Failed to search models: {}", response.status());
-        Err(format!("Failed to search models with keyword '{}'", search_query).into())
+        Err(format!("Failed to search models with keyword '{search_query}'").into())
     }
 }
 
 pub fn build_search_url(keywords: &[String], filter: Option<&str>, api_base_url: &str) -> String {
     let search_query = keywords.join(" ");
-    let mut url = format!("{}/api/models?search={}", api_base_url, search_query);
+    let mut url = format!("{api_base_url}/api/models?search={search_query}");
 
     if let Some(f) = filter {
-        url.push_str(&format!("&filter={}", f));
+        url.push_str(&format!("&filter={f}"));
     }
 
     url
