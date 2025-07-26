@@ -92,7 +92,7 @@
 <a href=#92 id=92 data-nosnippet>92</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(rev) = revision {
 <a href=#93 id=93 data-nosnippet>93</a>                <span class="comment">// Convert to a string to append revision
 <a href=#94 id=94 data-nosnippet>94</a>                </span><span class="kw">let </span>lds = local_dir.to_string_lossy();
-<a href=#95 id=95 data-nosnippet>95</a>                local_dir = std::path::PathBuf::from(<span class="macro">format!</span>(<span class="string">"{}:{}"</span>, lds, rev));
+<a href=#95 id=95 data-nosnippet>95</a>                local_dir = std::path::PathBuf::from(<span class="macro">format!</span>(<span class="string">"{lds}:{rev}"</span>));
 <a href=#96 id=96 data-nosnippet>96</a>            }
 <a href=#97 id=97 data-nosnippet>97</a>            commands::model::download(
 <a href=#98 id=98 data-nosnippet>98</a>                repository,
