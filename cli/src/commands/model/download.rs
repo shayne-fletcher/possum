@@ -12,8 +12,9 @@ pub async fn list_files(
     repository: &String,
     revision: Option<&String>,
     token: Option<&String>,
+    api_base_url: &str,
 ) -> Result<Vec<String>, Box<dyn Error + Send + Sync>> {
-    let mut url = format!("https://huggingface.co/api/models/{}", repository);
+    let mut url = format!("{}/api/models/{}", api_base_url, repository);
     if let Some(rev) = revision {
         url = format!("{}/revision/{}", url, rev);
     }
@@ -59,13 +60,14 @@ pub async fn download(
     revision: Option<&String>,
     to: &std::path::PathBuf,
     token: Option<&String>,
+    api_base_url: &str,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     if !to.exists() {
         fs::create_dir_all(&to)?;
         tracing::info!("Created directory: {}", to.display());
     }
 
-    let files = list_files(repository, revision, token).await?;
+    let files = list_files(repository, revision, token, api_base_url).await?;
 
     let has_safetensor = files
         .iter()
@@ -93,16 +95,17 @@ pub async fn download(
             let repository = repository.clone();
             let revision = revision.cloned();
             let mp = Arc::clone(&mp);
+            let api_base_url = api_base_url.to_string();
 
             task::spawn(async move {
                 let mut url = format!(
-                    "https://huggingface.co/{}/resolve/main/{}",
-                    repository, file
+                    "{}/{}/resolve/main/{}",
+                    api_base_url, repository, file
                 );
                 if let Some(rev) = revision {
                     url = format!(
-                        "https://huggingface.co/{}/resolve/{}/{}",
-                        repository, rev, file
+                        "{}/{}/resolve/{}/{}",
+                        api_base_url, repository, rev, file
                     );
                 }
 
@@ -157,4 +160,129 @@ pub async fn download(
     );
 
     Ok(())
+}
+
+pub fn build_file_list_url(repository: &str, revision: Option<&str>, api_base_url: &str) -> String {
+    let mut url = format!("{}/api/models/{}", api_base_url, repository);
+    if let Some(rev) = revision {
+        url = format!("{}/revision/{}", url, rev);
+    }
+    url
+}
+
+pub fn build_download_url(
+    repository: &str,
+    revision: Option<&str>,
+    filename: &str,
+    api_base_url: &str,
+) -> String {
+    let revision = revision.unwrap_or("main");
+    format!(
+        "{}/{}/resolve/{}/{}",
+        api_base_url, repository, revision, filename
+    )
+}
+
+pub fn should_ignore_file(filename: &str, has_safetensors: bool) -> bool {
+    if !has_safetensors {
+        return false;
+    }
+
+    let ignore_patterns = ["*.pt", "*.bin"];
+    ignore_patterns
+        .iter()
+        .map(|p| glob::Pattern::new(p).unwrap())
+        .any(|pattern| pattern.matches(filename))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_build_file_list_url_no_revision() {
+        let url = build_file_list_url(
+            "TheBloke/Llama-2-7B-Chat-GPTQ",
+            None,
+            "https://huggingface.co",
+        );
+        assert_eq!(
+            url,
+            "https://huggingface.co/api/models/TheBloke/Llama-2-7B-Chat-GPTQ"
+        );
+    }
+
+    #[test]
+    fn test_build_file_list_url_with_revision() {
+        let url = build_file_list_url(
+            "TheBloke/Llama-2-7B-Chat-GPTQ",
+            Some("gptq-4bit-64g-actorder_True"),
+            "https://huggingface.co",
+        );
+        assert_eq!(url, "https://huggingface.co/api/models/TheBloke/Llama-2-7B-Chat-GPTQ/revision/gptq-4bit-64g-actorder_True");
+    }
+
+    #[test]
+    fn test_build_download_url_main_branch() {
+        let url = build_download_url(
+            "TheBloke/Llama-2-7B-Chat-GPTQ",
+            None,
+            "model.safetensors",
+            "https://huggingface.co",
+        );
+        assert_eq!(
+            url,
+            "https://huggingface.co/TheBloke/Llama-2-7B-Chat-GPTQ/resolve/main/model.safetensors"
+        );
+    }
+
+    #[test]
+    fn test_build_download_url_with_revision() {
+        let url = build_download_url(
+            "TheBloke/Llama-2-7B-Chat-GPTQ",
+            Some("gptq-4bit-64g-actorder_True"),
+            "model.safetensors",
+            "https://huggingface.co",
+        );
+        assert_eq!(url, "https://huggingface.co/TheBloke/Llama-2-7B-Chat-GPTQ/resolve/gptq-4bit-64g-actorder_True/model.safetensors");
+    }
+
+    #[test]
+    fn test_build_file_list_url_custom_base() {
+        let url = build_file_list_url("test/model", None, "http://localhost:8080");
+        assert_eq!(url, "http://localhost:8080/api/models/test/model");
+    }
+
+    #[test]
+    fn test_build_download_url_custom_base() {
+        let url = build_download_url("test/model", None, "file.txt", "http://localhost:8080");
+        assert_eq!(
+            url,
+            "http://localhost:8080/test/model/resolve/main/file.txt"
+        );
+    }
+
+    #[test]
+    fn test_should_ignore_file_no_safetensors() {
+        assert!(!should_ignore_file("model.bin", false));
+        assert!(!should_ignore_file("model.pt", false));
+        assert!(!should_ignore_file("model.safetensors", false));
+    }
+
+    #[test]
+    fn test_should_ignore_file_with_safetensors() {
+        assert!(should_ignore_file("model.bin", true));
+        assert!(should_ignore_file("model.pt", true));
+        assert!(should_ignore_file("pytorch_model.bin", true));
+        assert!(!should_ignore_file("model.safetensors", true));
+        assert!(!should_ignore_file("config.json", true));
+    }
+
+    #[test]
+    fn test_should_ignore_file_patterns() {
+        assert!(should_ignore_file("anything.pt", true));
+        assert!(should_ignore_file("anything.bin", true));
+        assert!(!should_ignore_file("anything.safetensors", true));
+        assert!(!should_ignore_file("model.json", true));
+    }
 }
