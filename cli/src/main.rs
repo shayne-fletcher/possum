@@ -11,6 +11,14 @@ const DEFAULT_DOWNLOAD_DIR: &str = "./huggingface";
 struct Args {
     #[command(subcommand)]
     command: Option<Commands>,
+
+    /// Base URL for HuggingFace API (for testing)
+    #[arg(
+        long,
+        env = "HUGGINGFACE_API_BASE_URL",
+        default_value = "https://huggingface.co"
+    )]
+    api_base_url: String,
 }
 
 #[derive(Subcommand)]
@@ -68,7 +76,10 @@ enum ModelCommands {
     },
 }
 
-async fn model_command(command: &ModelCommands) -> Result<(), Box<dyn Error + Send + Sync>> {
+async fn model_command(
+    command: &ModelCommands,
+    api_base_url: &str,
+) -> Result<(), Box<dyn Error + Send + Sync>> {
     match command {
         ModelCommands::Download {
             repository,
@@ -83,17 +94,23 @@ async fn model_command(command: &ModelCommands) -> Result<(), Box<dyn Error + Se
                 let lds = local_dir.to_string_lossy();
                 local_dir = std::path::PathBuf::from(format!("{}:{}", lds, rev));
             }
-            commands::model::download(repository, revision.as_ref(), &local_dir, token.as_ref())
-                .await?
+            commands::model::download(
+                repository,
+                revision.as_ref(),
+                &local_dir,
+                token.as_ref(),
+                api_base_url,
+            )
+            .await?
         }
         ModelCommands::Metadata { repository } => {
-            commands::model::metadata(repository).await?;
+            commands::model::metadata(repository, api_base_url).await?;
         }
         ModelCommands::Search { keyword, filter } => {
-            commands::model::search(keyword, filter.as_deref()).await?;
+            commands::model::search(keyword, filter.as_deref(), api_base_url).await?;
         }
         ModelCommands::Revisions { repository } => {
-            commands::model::revisions(repository).await?;
+            commands::model::revisions(repository, api_base_url).await?;
         }
     };
 
@@ -114,9 +131,142 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 
     tracing::info!("Hello possums! ✨");
     match &args.command {
-        Some(Commands::Model { command }) => model_command(command).await?,
+        Some(Commands::Model { command }) => model_command(command, &args.api_base_url).await?,
         None => (),
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::Parser;
+
+    #[test]
+    fn test_cli_model_search() {
+        let args = Args::parse_from([
+            "possum",
+            "model",
+            "search",
+            "--keyword",
+            "TheBloke",
+            "--keyword",
+            "Llama-2-7B",
+            "--filter",
+            "gptq",
+        ]);
+
+        match args.command {
+            Some(Commands::Model {
+                command: ModelCommands::Search { keyword, filter },
+            }) => {
+                assert_eq!(keyword, vec!["TheBloke", "Llama-2-7B"]);
+                assert_eq!(filter, Some("gptq".to_string()));
+            }
+            _ => panic!("Expected Search command"),
+        }
+    }
+
+    #[test]
+    fn test_cli_model_metadata() {
+        let args = Args::parse_from([
+            "possum",
+            "model",
+            "metadata",
+            "--repository",
+            "TheBloke/Llama-2-7B-Chat-GPTQ",
+        ]);
+
+        match args.command {
+            Some(Commands::Model {
+                command: ModelCommands::Metadata { repository },
+            }) => {
+                assert_eq!(repository, "TheBloke/Llama-2-7B-Chat-GPTQ");
+            }
+            _ => panic!("Expected Metadata command"),
+        }
+    }
+
+    #[test]
+    fn test_cli_model_revisions() {
+        let args = Args::parse_from([
+            "possum",
+            "model",
+            "revisions",
+            "--repository",
+            "TheBloke/Llama-2-7B-Chat-GPTQ",
+        ]);
+
+        match args.command {
+            Some(Commands::Model {
+                command: ModelCommands::Revisions { repository },
+            }) => {
+                assert_eq!(repository, "TheBloke/Llama-2-7B-Chat-GPTQ");
+            }
+            _ => panic!("Expected Revisions command"),
+        }
+    }
+
+    #[test]
+    fn test_cli_model_download() {
+        let args = Args::parse_from([
+            "possum",
+            "model",
+            "download",
+            "--repository",
+            "TheBloke/Llama-2-7B-Chat-GPTQ",
+            "--revision",
+            "gptq-4bit-64g-actorder_True",
+        ]);
+
+        match args.command {
+            Some(Commands::Model {
+                command:
+                    ModelCommands::Download {
+                        repository,
+                        revision,
+                        to,
+                        token,
+                    },
+            }) => {
+                assert_eq!(repository, "TheBloke/Llama-2-7B-Chat-GPTQ");
+                assert_eq!(revision, Some("gptq-4bit-64g-actorder_True".to_string()));
+                assert_eq!(to, Some(std::path::PathBuf::from(DEFAULT_DOWNLOAD_DIR)));
+                assert_eq!(token, None);
+            }
+            _ => panic!("Expected Download command"),
+        }
+    }
+
+    #[test]
+    fn test_cli_model_download_with_custom_dir() {
+        let args = Args::parse_from([
+            "possum",
+            "model",
+            "download",
+            "--repository",
+            "TheBloke/Llama-2-7B-Chat-GPTQ",
+            "--to",
+            "/custom/path",
+        ]);
+
+        match args.command {
+            Some(Commands::Model {
+                command:
+                    ModelCommands::Download {
+                        repository,
+                        revision,
+                        to,
+                        token,
+                    },
+            }) => {
+                assert_eq!(repository, "TheBloke/Llama-2-7B-Chat-GPTQ");
+                assert_eq!(revision, None);
+                assert_eq!(to, Some(std::path::PathBuf::from("/custom/path")));
+                assert_eq!(token, None);
+            }
+            _ => panic!("Expected Download command"),
+        }
+    }
 }
