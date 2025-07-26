@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["search"]};
+window.SIDEBAR_ITEMS = {"fn":["build_search_url","search"]};

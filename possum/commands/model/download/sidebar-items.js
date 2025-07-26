@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["download","list_files"]};
+window.SIDEBAR_ITEMS = {"fn":["build_download_url","build_file_list_url","download","list_files","should_ignore_file"]};

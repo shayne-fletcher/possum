@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["metadata"]};
+window.SIDEBAR_ITEMS = {"fn":["build_metadata_url","metadata"]};
