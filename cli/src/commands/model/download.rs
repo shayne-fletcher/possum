@@ -14,10 +14,7 @@ pub async fn list_files(
     token: Option<&String>,
     api_base_url: &str,
 ) -> Result<Vec<String>, Box<dyn Error + Send + Sync>> {
-    let mut url = format!("{}/api/models/{}", api_base_url, repository);
-    if let Some(rev) = revision {
-        url = format!("{}/revision/{}", url, rev);
-    }
+    let url = build_file_list_url(repository, revision.map(|s| s.as_str()), api_base_url);
 
     tracing::info!(
         "Getting a file list of {repository} (@ revision \"{}\")",
@@ -51,7 +48,7 @@ pub async fn list_files(
         }
     } else {
         tracing::error!("Failed to list files: {}", response.status());
-        Err(format!("Failed to list files for {}", repository).into())
+        Err(format!("Failed to list files for {repository}").into())
     }
 }
 
@@ -63,7 +60,7 @@ pub async fn download(
     api_base_url: &str,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     if !to.exists() {
-        fs::create_dir_all(&to)?;
+        fs::create_dir_all(to)?;
         tracing::info!("Created directory: {}", to.display());
     }
 
@@ -72,22 +69,12 @@ pub async fn download(
     let has_safetensor = files
         .iter()
         .any(|file| file.starts_with("model") && file.ends_with(".safetensors"));
-    let ignore_patterns = if has_safetensor {
-        ["*.pt", "*.bin"]
-            .iter()
-            .map(|p| glob::Pattern::new(p).unwrap())
-            .collect()
-    } else {
-        Vec::new()
-    };
 
     let client = Arc::new(Client::new());
     let mp = Arc::new(MultiProgress::new()); // MultiProgress for managing multiple progress bars
     let download_tasks: Vec<_> = files
         .into_iter()
-        .filter(|file| {
-            !ignore_patterns.iter().any(|pattern| pattern.matches(file))
-        })
+        .filter(|file| !should_ignore_file(file, has_safetensor))
         .map(|file| {
             let client = Arc::clone(&client);
             let token = token.cloned();
@@ -98,16 +85,12 @@ pub async fn download(
             let api_base_url = api_base_url.to_string();
 
             task::spawn(async move {
-                let mut url = format!(
-                    "{}/{}/resolve/main/{}",
-                    api_base_url, repository, file
+                let url = build_download_url(
+                    &repository,
+                    revision.as_deref(),
+                    &file,
+                    &api_base_url,
                 );
-                if let Some(rev) = revision {
-                    url = format!(
-                        "{}/{}/resolve/{}/{}",
-                        api_base_url, repository, rev, file
-                    );
-                }
 
                 let request = match token {
                     Some(t) => client.get(&url).bearer_auth(t),
@@ -135,7 +118,7 @@ pub async fn download(
                         tokio::io::copy(&mut chunk.as_ref(), &mut dest).await?;
                         progress_bar.inc(chunk.len() as u64);
                     }
-                    progress_bar.finish_with_message(format!("Downloaded: {}", file));
+                    progress_bar.finish_with_message(format!("Downloaded: {file}"));
                 } else {
                     tracing::error!("Failed to download file: {}", file);
                 }
@@ -163,9 +146,9 @@ pub async fn download(
 }
 
 pub fn build_file_list_url(repository: &str, revision: Option<&str>, api_base_url: &str) -> String {
-    let mut url = format!("{}/api/models/{}", api_base_url, repository);
+    let mut url = format!("{api_base_url}/api/models/{repository}");
     if let Some(rev) = revision {
-        url = format!("{}/revision/{}", url, rev);
+        url = format!("{url}/revision/{rev}");
     }
     url
 }
@@ -177,10 +160,7 @@ pub fn build_download_url(
     api_base_url: &str,
 ) -> String {
     let revision = revision.unwrap_or("main");
-    format!(
-        "{}/{}/resolve/{}/{}",
-        api_base_url, repository, revision, filename
-    )
+    format!("{api_base_url}/{repository}/resolve/{revision}/{filename}")
 }
 
 pub fn should_ignore_file(filename: &str, has_safetensors: bool) -> bool {

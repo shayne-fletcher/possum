@@ -92,7 +92,7 @@ async fn model_command(
             if let Some(rev) = revision {
                 // Convert to a string to append revision
                 let lds = local_dir.to_string_lossy();
-                local_dir = std::path::PathBuf::from(format!("{}:{}", lds, rev));
+                local_dir = std::path::PathBuf::from(format!("{lds}:{rev}"));
             }
             commands::model::download(
                 repository,

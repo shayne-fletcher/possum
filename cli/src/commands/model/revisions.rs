@@ -6,7 +6,7 @@ fn extract_branch_names(parsed_json: &Value) -> Result<(), Box<dyn Error + Send 
     if let Some(branches) = parsed_json.get("branches").and_then(|b| b.as_array()) {
         for branch in branches {
             if let Some(name) = branch.get("name").and_then(|n| n.as_str()) {
-                println!("{}", name);
+                println!("{name}");
             }
         }
     } else {
@@ -23,7 +23,7 @@ pub async fn revisions(
     api_base_url: &str,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     let client = Client::new();
-    let url = format!("{}/api/models/{}/refs", api_base_url, repository);
+    let url = build_revisions_url(repository, api_base_url);
 
     let response = client.get(&url).send().await?;
 
@@ -34,34 +34,34 @@ pub async fn revisions(
         Ok(())
     } else {
         println!("Failed to fetch refs: {}", response.status());
-        Err(format!("Failed to fetch refs for '{}'", repository).into())
+        Err(format!("Failed to fetch refs for '{repository}'").into())
     }
 }
 
 pub fn build_revisions_url(repository: &str, api_base_url: &str) -> String {
-    format!("{}/api/models/{}/refs", api_base_url, repository)
-}
-
-pub fn parse_branches_from_json(
-    json_str: &str,
-) -> Result<Vec<String>, Box<dyn Error + Send + Sync>> {
-    let parsed: Value = serde_json::from_str(json_str)?;
-    let mut branches = Vec::new();
-
-    if let Some(branch_array) = parsed.get("branches").and_then(|b| b.as_array()) {
-        for branch in branch_array {
-            if let Some(name) = branch.get("name").and_then(|n| n.as_str()) {
-                branches.push(name.to_string());
-            }
-        }
-    }
-
-    Ok(branches)
+    format!("{api_base_url}/api/models/{repository}/refs")
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn parse_branches_from_json(
+        json_str: &str,
+    ) -> Result<Vec<String>, Box<dyn Error + Send + Sync>> {
+        let parsed: Value = serde_json::from_str(json_str)?;
+        let mut branches = Vec::new();
+
+        if let Some(branch_array) = parsed.get("branches").and_then(|b| b.as_array()) {
+            for branch in branch_array {
+                if let Some(name) = branch.get("name").and_then(|n| n.as_str()) {
+                    branches.push(name.to_string());
+                }
+            }
+        }
+
+        Ok(branches)
+    }
 
     #[test]
     fn test_build_revisions_url() {

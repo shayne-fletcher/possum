@@ -7,20 +7,20 @@ pub async fn metadata(
     api_base_url: &str,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     let client = Client::new();
-    let url = format!("{}/api/models/{}", api_base_url, repository);
+    let url = build_metadata_url(repository, api_base_url);
     let response = client.get(&url).send().await?;
     if response.status().is_success() {
         let metadata: Value = response.json().await?;
-        println!("{}", metadata.to_string());
+        println!("{metadata}");
         Ok(())
     } else {
         eprintln!("Failed to fetch metadata: {}", response.status());
-        Err(format!("Failed to get metadata for {}", repository).into())
+        Err(format!("Failed to get metadata for {repository}").into())
     }
 }
 
 pub fn build_metadata_url(repository: &str, api_base_url: &str) -> String {
-    format!("{}/api/models/{}", api_base_url, repository)
+    format!("{api_base_url}/api/models/{repository}")
 }
 
 #[cfg(test)]
