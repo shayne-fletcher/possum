@@ -50,6 +50,8 @@ jobs:
       id: test-cache
       with:
         shared-key: shared-build-cache
+        cache-targets: true
+        cache-all-crates: true
     - name: run tests
       working-directory: '.'
       run: cargo test
@@ -73,6 +75,8 @@ jobs:
       id: docs-cache
       with:
         shared-key: shared-build-cache
+        cache-targets: true
+        cache-all-crates: true
     - name: build docs
       working-directory: '.'
       run: cargo doc --no-deps
