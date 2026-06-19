@@ -25,7 +25,7 @@ async fn test_model_search_integration() {
     // Now we can use the mock server URL
     let mut cmd = Command::cargo_bin("possum").unwrap();
     let output = cmd
-        .args(&[
+        .args([
             "--api-base-url",
             &mock_server.uri(),
             "model",
@@ -69,7 +69,7 @@ async fn test_model_metadata_integration() {
 
     let mut cmd = Command::cargo_bin("possum").unwrap();
     let output = cmd
-        .args(&[
+        .args([
             "--api-base-url",
             &mock_server.uri(),
             "model",
@@ -106,7 +106,7 @@ async fn test_model_revisions_integration() {
 
     let mut cmd = Command::cargo_bin("possum").unwrap();
     let output = cmd
-        .args(&[
+        .args([
             "--api-base-url",
             &mock_server.uri(),
             "model",
@@ -159,7 +159,7 @@ async fn test_model_download_integration() {
 
     let mut cmd = Command::cargo_bin("possum").unwrap();
     let output = cmd
-        .args(&[
+        .args([
             "--api-base-url",
             &mock_server.uri(),
             "model",
