@@ -1,7 +1,5 @@
-mod commands;
-
 use clap::{Parser, Subcommand};
-
+use possum_lib::model::{self, DownloadRequest};
 use std::error::Error;
 
 const DEFAULT_DOWNLOAD_DIR: &str = "./huggingface";
@@ -109,26 +107,42 @@ async fn model_command(
                 let lds = local_dir.to_string_lossy();
                 local_dir = std::path::PathBuf::from(format!("{lds}:{rev}"));
             }
-            commands::model::download(
-                repository,
-                revision.as_ref(),
-                &local_dir,
-                token.as_ref(),
-                include,
-                exclude,
-                *concurrency,
-                api_base_url,
-            )
-            .await?
+            let request = DownloadRequest {
+                repository: repository.clone(),
+                revision: revision.clone(),
+                to: local_dir,
+                token: token.clone(),
+                include: include.clone(),
+                exclude: exclude.clone(),
+                concurrency: *concurrency,
+                api_base_url: api_base_url.to_string(),
+                ..Default::default()
+            };
+            model::download(&request).await?;
         }
         ModelCommands::Metadata { repository } => {
-            commands::model::metadata(repository, api_base_url).await?;
+            let meta = model::metadata(repository, api_base_url).await?;
+            println!("{meta}");
         }
         ModelCommands::Search { keyword, filter } => {
-            commands::model::search(keyword, filter.as_deref(), api_base_url).await?;
+            let ids = model::search(keyword, filter.as_deref(), api_base_url).await?;
+            if ids.is_empty() {
+                println!("No models found for '{}'.", keyword.join(" "));
+            } else {
+                for id in ids {
+                    println!("{id}");
+                }
+            }
         }
         ModelCommands::Revisions { repository } => {
-            commands::model::revisions(repository, api_base_url).await?;
+            let names = model::revisions(repository, api_base_url).await?;
+            if names.is_empty() {
+                println!("No branches found.");
+            } else {
+                for name in names {
+                    println!("{name}");
+                }
+            }
         }
     };
 

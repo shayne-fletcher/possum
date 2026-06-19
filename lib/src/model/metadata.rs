@@ -1,21 +1,20 @@
+use crate::BoxError;
 use reqwest::Client;
 use serde_json::Value;
-use std::error::Error;
 
-pub async fn metadata(
-    repository: &str,
-    api_base_url: &str,
-) -> Result<(), Box<dyn Error + Send + Sync>> {
+/// Fetch a repository's metadata as raw JSON.
+pub async fn metadata(repository: &str, api_base_url: &str) -> Result<Value, BoxError> {
     let client = Client::new();
     let url = build_metadata_url(repository, api_base_url);
     let response = client.get(&url).send().await?;
     if response.status().is_success() {
-        let metadata: Value = response.json().await?;
-        println!("{metadata}");
-        Ok(())
+        Ok(response.json().await?)
     } else {
-        eprintln!("Failed to fetch metadata: {}", response.status());
-        Err(format!("Failed to get metadata for {repository}").into())
+        Err(format!(
+            "Failed to get metadata for {repository} (HTTP {})",
+            response.status()
+        )
+        .into())
     }
 }
 
