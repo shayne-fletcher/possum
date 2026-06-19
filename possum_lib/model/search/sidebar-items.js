@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["build_search_url","model_ids","search"]};

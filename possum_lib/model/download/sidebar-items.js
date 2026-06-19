@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ProgressMode"],"fn":["build_download_url","build_file_list_url","download","list_files","select_files","should_ignore_file"],"struct":["DownloadRequest"]};

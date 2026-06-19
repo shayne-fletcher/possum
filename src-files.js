@@ -1,2 +1,2 @@
-createSrcSidebar('[["possum",["",[["commands",[["model",[],["download.rs","metadata.rs","mod.rs","revisions.rs","search.rs"]]],["mod.rs"]]],["main.rs"]]],["possum_lib",["",[],["lib.rs"]]]]');
-//{"start":19,"fragment_lengths":[134,34]}
+createSrcSidebar('[["possum",["",[],["main.rs"]]],["possum_lib",["",[["model",[],["download.rs","metadata.rs","mod.rs","revisions.rs","search.rs"]]],["lib.rs"]]]]');
+//{"start":19,"fragment_lengths":[30,112]}

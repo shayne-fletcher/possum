@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["build_revisions_url","extract_branch_names","revisions"]};
