@@ -50,6 +50,18 @@ enum ModelCommands {
         /// Hugging Face token (might be needed for 'gated' models)
         #[arg(long)]
         token: Option<String>,
+
+        /// Glob(s) of files to include (default: all files)
+        #[arg(long, num_args = 1..)]
+        include: Vec<String>,
+
+        /// Glob(s) of files to exclude
+        #[arg(long, num_args = 1..)]
+        exclude: Vec<String>,
+
+        /// Maximum number of concurrent file downloads
+        #[arg(long, default_value_t = 4)]
+        concurrency: usize,
     },
     /// Get repository metadata
     Metadata {
@@ -86,6 +98,9 @@ async fn model_command(
             revision,
             to,
             token,
+            include,
+            exclude,
+            concurrency,
         } => {
             let mut local_dir = to.as_ref().unwrap().clone();
             local_dir.push(repository);
@@ -99,6 +114,9 @@ async fn model_command(
                 revision.as_ref(),
                 &local_dir,
                 token.as_ref(),
+                include,
+                exclude,
+                *concurrency,
                 api_base_url,
             )
             .await?
@@ -228,12 +246,18 @@ mod tests {
                         revision,
                         to,
                         token,
+                        include,
+                        exclude,
+                        concurrency,
                     },
             }) => {
                 assert_eq!(repository, "TheBloke/Llama-2-7B-Chat-GPTQ");
                 assert_eq!(revision, Some("gptq-4bit-64g-actorder_True".to_string()));
                 assert_eq!(to, Some(std::path::PathBuf::from(DEFAULT_DOWNLOAD_DIR)));
                 assert_eq!(token, None);
+                assert!(include.is_empty());
+                assert!(exclude.is_empty());
+                assert_eq!(concurrency, 4);
             }
             _ => panic!("Expected Download command"),
         }
@@ -259,12 +283,48 @@ mod tests {
                         revision,
                         to,
                         token,
+                        ..
                     },
             }) => {
                 assert_eq!(repository, "TheBloke/Llama-2-7B-Chat-GPTQ");
                 assert_eq!(revision, None);
                 assert_eq!(to, Some(std::path::PathBuf::from("/custom/path")));
                 assert_eq!(token, None);
+            }
+            _ => panic!("Expected Download command"),
+        }
+    }
+
+    #[test]
+    fn test_cli_model_download_with_globs() {
+        let args = Args::parse_from([
+            "possum",
+            "model",
+            "download",
+            "--repository",
+            "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+            "--include",
+            "*.safetensors",
+            "*.json",
+            "--exclude",
+            "figures/*",
+            "--concurrency",
+            "8",
+        ]);
+
+        match args.command {
+            Some(Commands::Model {
+                command:
+                    ModelCommands::Download {
+                        include,
+                        exclude,
+                        concurrency,
+                        ..
+                    },
+            }) => {
+                assert_eq!(include, vec!["*.safetensors", "*.json"]);
+                assert_eq!(exclude, vec!["figures/*"]);
+                assert_eq!(concurrency, 8);
             }
             _ => panic!("Expected Download command"),
         }
