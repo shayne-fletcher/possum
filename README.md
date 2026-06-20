@@ -14,7 +14,7 @@
   </a>
 </p>
 
-`possum` is a small Rust CLI for working with 🤗 Hugging Face model
+`possum` is a small Rust CLI for working with 🤗 model
 repositories — search the hub, inspect metadata and revisions, and download
 exactly the files you want.
 
